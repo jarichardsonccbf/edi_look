@@ -20,15 +20,24 @@ mmdata <- mmdata %>%
 
 rm(valid_column_names)
 
+# Deal with club coke CR
+
+cc.cr <- mmdata %>%
+  filter(KeyAccount == "CLUB COKE - HOME MAR" & Channel == "Convenience Store/Pe") %>%
+  mutate(Ordering.Method = "EDID")
+
+mmdata2 <- mmdata %>%
+  filter(KeyAccount != "CLUB COKE - HOME MAR" | Channel != "Convenience Store/Pe")
+
 # Insert ordering method based on key account
 
-ka.joins <- mmdata %>%
+ka.joins <- mmdata2 %>%
   left_join(KA, by = "KeyAccount") %>%
   filter(!is.na(Ordering.Method))
 
 # parse out outlets that don't have key account info
 
-non.ka <- mmdata %>%
+non.ka <- mmdata2 %>%
   left_join(KA, by = "KeyAccount") %>%
   filter(is.na(Ordering.Method)) %>%
   select(-c("Ordering.Method"))
@@ -45,9 +54,9 @@ therest.joins <- non.ka %>%
   select(-c("Ordering.Method")) %>%
   mutate(Ordering.Method = PreferredOrderMethod)
 
-df <- rbind(ka.joins, channel.joins, therest.joins)
+df <- rbind(ka.joins, channel.joins, therest.joins, cc.cr)
 
-rm(channel, channel.joins, KA, ka.joins, mmdata, non.ka, therest.joins)
+rm(channel, channel.joins, KA, ka.joins, mmdata, non.ka, therest.joins, mmdata2, cc.cr)
 
 outlet.summary <- df %>%
   group_by(Ordering.Method) %>%
